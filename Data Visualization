@@ -1,0 +1,153 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Feb  3 09:39:29 2024
+
+@author: Xiujie Chan
+"""
+
+#初探資料
+import requests
+import pandas as pd
+#目標api網址  參考YouBike2.0新北市公共自行車即時資訊
+url = "https://data.ntpc.gov.tw/api/datasets/71CD1490-A2DF-4198-BEF1-318479775E8A/json?page=0&size=650"  # 今年增加12站
+#透過GET方法進行訪問
+res = requests.get(url)
+
+##查看回傳資訊
+print(res.status_code) #回傳狀態碼為200
+print(res.json())#查看返回之內容
+
+data_list = res.json()
+print(len(data_list))
+
+#將data_list 內之資料,轉為DataFrame進行操作
+df = pd.DataFrame(data_list)
+
+df.head() #　查看前五項資料
+
+print(list(df.columns))
+
+part_df=df[['sareaen', 'sna','lat', 'lng','sbi','tot','act']]
+part_df.head()
+
+part_df['sareaen'].unique()
+
+part_df.query("sareaen=='Xindian Dist.'")
+
+xindian=part_df.query("sareaen=='Xindian Dist.'")
+xindian['sbi'].mean()
+
+xindian=part_df.query("sareaen=='Xindian Dist.'")
+xindian_sbi_lst=list(xindian['sbi'])
+print(xindian_sbi_lst)
+
+#初探統計資訊視覺化
+import requests
+import pandas as pd
+# 目標api網址
+url = "https://data.ntpc.gov.tw/api/datasets/71CD1490-A2DF-4198-BEF1-318479775E8A/json?page=0&size=650"
+# 透過 GET方法進行訪問
+res = requests.get(url)
+
+# # 查看回傳資訊
+# print(res.status_code) # 回傳狀態碼為 200
+# print(res.json()) # 查看返回之內容
+
+data_list = res.json()
+print(len(data_list))
+
+# 將 data_list 內之資料, 轉為 DataFrame進行操作
+df = pd.DataFrame(data_list)
+
+df
+
+part_df=df[['sareaen', 'sna','lat', 'lng','sbi','tot','act']]
+part_df.head()
+
+# show the data type
+# of each columns
+print (part_df.dtypes)
+
+part_df['tot']=pd.to_numeric(part_df['tot'])
+# show the data type
+# of each columns
+print (part_df.dtypes)
+
+#將資料已sarea(地區)，並加總各地區之tot(車輛停車位)
+
+sarea_tot = part_df.groupby("sareaen").agg({"tot":"sum"}).reset_index()
+
+#以tot排序(遞減)
+sarea_tot.sort_values("tot",ascending=False).reset_index(drop=True)
+
+sarea_tot.plot.bar(x='sareaen', y='tot', rot=25,figsize=(15,5))
+
+#地圖視覺化
+!pip install folium==0.10.1  #Python 3.8.2，pandas 1.0.3，folium 0.10.1
+
+import folium
+m = folium.Map(location=[45.5236, -122.6750])
+m
+
+import folium
+lat=25.0133904
+lon=121.52245
+new_m = folium.Map(location=[lat, lon])
+folium.CircleMarker([lat, lon],
+                    radius=20,
+                    color='red',
+                    fill_color='red',
+                    fill_opacity=0.7,
+                    popup = ('<strong>新北市</strong><br>')
+                    ).add_to(new_m)
+new_m
+
+import folium
+import requests
+import pandas as pd
+
+ 
+
+# 爬取資料
+url = "https://data.ntpc.gov.tw/api/datasets/71CD1490-A2DF-4198-BEF1-318479775E8A/json?page=0&size=638"
+res = requests.get(url)
+data_list = res.json()
+print(len(data_list))
+# 將資料轉 pd.DataFrame類型
+df = pd.DataFrame(data_list)
+
+df.head()
+
+# import sys
+
+# sys.setrecursionlimit(700) #例如這裡設定為一百萬
+
+for idx, row in df.iterrows():
+    # 每一row之資訊
+    sna = row['sna']
+    sarea = row['sareaen']
+    lng = row['lng']
+    lat = row['lat']
+    
+    # 計算該站點目前 可借車輛/總車位 之比例
+    sbi = float(row['sbi'])
+    tot = float(row['tot'])
+    sbi_percent = sbi/tot
+        
+    # 將比例以不同顏色顯示
+    if sbi_percent < 0.3:
+        color = '#fd5e53' # 紅
+    elif sbi_percent < 0.5:
+        color = '#ffbd69' # 橘
+    elif sbi_percent < 0.7:
+        color = '#b0eacd' # 淺綠
+    else:
+        color = '#21bf73' # 深綠
+
+    # 將每一個點做一次的 Circle繪圖
+    folium.CircleMarker(radius=5,location=[lat, lng], color=color, fill_color=color,).add_to(new_m)
+
+# 繪圖
+new_m
+
+
